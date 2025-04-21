@@ -50,6 +50,10 @@ cp -r "$NEW_TEMPLATES_DIR" "$TARGET_DIR"
 
 # 提交变更
 git add .
-git commit -m "Update templates to $latest_tag"
-git tag "$latest_tag"
-git push origin main --tags
+if [ -z "$(git diff --cached)" ]; then
+  echo "No changes to commit."
+else
+  git commit -m "Update templates to $latest_tag"
+  git tag "$latest_tag"
+  git push origin main --tags
+fi
