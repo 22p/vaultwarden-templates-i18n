@@ -1,0 +1,134 @@
+/**** 开始静态Vaultwarden更改 ****/
+/* 将所有继承它的选择器合并为一个 */
+%vw-hide {
+  display: none !important;
+}
+
+/* 允许在浏览器开发者工具中搜索合并后的样式（查看head标签） */
+.vw-hide,
+head {
+  @extend %vw-hide;
+}
+
+/* 隐藏订阅页面标签 */
+bit-nav-item[route="settings/subscription"] {
+  @extend %vw-hide;
+}
+
+/* 隐藏指向免费Bitwarden家庭版的任何链接 */
+a[href$="/settings/sponsored-families"] {
+  @extend %vw-hide;
+}
+
+/* 隐藏登录页面的`企业单点登录`按钮 */
+a[routerlink="/sso"] {
+  @extend %vw-hide;
+}
+
+/* 隐藏组织设置中的双因素认证菜单 */
+bit-nav-item[route="settings/two-factor"],
+a[href$="/settings/two-factor"] {
+  @extend %vw-hide;
+}
+
+/* 隐藏企业所有权复选框 */
+app-org-info > form:nth-child(1) > div:nth-child(3) {
+  @extend %vw-hide;
+}
+
+/* 隐藏`此账户由企业所有`复选框和标签 */
+#ownedBusiness,
+label[for^="ownedBusiness"] {
+  @extend %vw-hide;
+}
+
+/* 隐藏企业名称 */
+app-org-account form div bit-form-field.tw-block:nth-child(3) {
+  @extend %vw-hide;
+}
+
+/* 隐藏组织计划 */
+app-organization-plans > form > bit-section:nth-child(2) {
+  @extend %vw-hide;
+}
+
+/* 隐藏集合管理表单 */
+app-org-account form.ng-untouched:nth-child(6) {
+  @extend %vw-hide;
+}
+
+/* 从组织报告中隐藏'成员访问'报告卡片 */
+app-org-reports-home > app-report-list > div.tw-inline-grid > div:nth-child(6) {
+  @extend %vw-hide;
+}
+
+/* 隐藏两步登录界面的设备验证表单 */
+app-security > app-two-factor-setup > form {
+  @extend %vw-hide;
+}
+
+/* 隐藏不支持的自定义角色选项 */
+bit-dialog div.tw-ml-4:has(bit-form-control input),
+bit-dialog div.tw-col-span-4:has(input[formcontrolname*="access"], input[formcontrolname*="manage"]) {
+  @extend %vw-hide;
+}
+
+/* 隐藏使用通行密钥登录 */
+app-login div.tw-flex:nth-child(4) {
+  @extend %vw-hide;
+}
+
+/* 将折叠菜单图标更改为Vaultwarden */
+bit-nav-logo bit-nav-item a:before {
+  content: "";
+  background-image: url("../images/icon-white.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  height: 32px;
+  display: block;
+}
+bit-nav-logo bit-nav-item .bwi-shield {
+  @extend %vw-hide;
+}
+/**** 结束静态Vaultwarden更改 ****/
+/**** 开始动态Vaultwarden更改 ****/
+{{#if signup_disabled}}
+/* 隐藏登录屏幕上的注册链接 */
+app-login form div + div + div + div + hr,
+app-login form div + div + div + div + hr + p {
+  @extend %vw-hide;
+}
+{{/if}}
+
+{{#unless mail_enabled}}
+/* 如果邮件未启用，隐藏`电子邮件`双因素认证 */
+app-two-factor-setup ul.list-group.list-group-2fa li.list-group-item:nth-child(1) {
+  @extend %vw-hide;
+}
+{{/unless}}
+
+{{#unless yubico_enabled}}
+/* 如果未启用，隐藏`YubiKey OTP安全密钥`双因素认证 */
+app-two-factor-setup ul.list-group.list-group-2fa li.list-group-item:nth-child(4) {
+  @extend %vw-hide;
+}
+{{/unless}}
+
+{{#unless emergency_access_allowed}}
+/* 如果不允许，隐藏紧急访问 */
+bit-nav-item[route="settings/emergency-access"] {
+  @extend %vw-hide;
+}
+{{/unless}}
+
+{{#unless sends_allowed}}
+/* 如果不允许，隐藏发送 */
+bit-nav-item[route="sends"] {
+  @extend %vw-hide;
+}
+{{/unless}}
+/**** 结束动态Vaultwarden更改 ****/
+/**** 包含一个特殊的用户样式表用于自定义更改 ****/
+{{#if load_user_scss}}
+{{> scss/user.vaultwarden.scss }}
+{{/if}}

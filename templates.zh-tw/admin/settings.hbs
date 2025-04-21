@@ -1,0 +1,155 @@
+<main class="container-xl">
+    <div id="admin_token_warning" class="alert alert-warning alert-dismissible fade show d-none">
+        <button type="button" class="btn-close" data-bs-target="admin_token_warning" data-bs-dismiss="alert" aria-label="關閉"></button>
+        您正在使用明文 `ADMIN_TOKEN`，這是不安全的。<br>
+        請使用 `vaultwarden hash` 或 `argon2` 生成安全的 Argon2 PHC 字串。<br>
+        參見：<a href="https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#secure-the-admin_token" target="_blank" rel="noopener noreferrer">啟用管理頁面 - 保護 `ADMIN_TOKEN`</a>
+    </div>
+    <div id="config-block" class="align-items-center p-3 mb-3 bg-secondary rounded shadow">
+        <div>
+            <h6 class="text-white mb-3">設定</h6>
+            <div class="small text-white mb-3">
+                <span class="font-weight-bolder">注意：</span>此處的設定會覆蓋環境變數。儲存後，建議停止設定它們以避免混淆。<br>
+                這不適用於唯讀部分，該部分只能透過環境變數設定。<br>
+                被覆蓋的設定會以<span class="is-overridden-true alert-row px-1">黃色背景</span>顯示。
+            </div>
+
+            <form class="form needs-validation" id="config-form" novalidate>
+                {{#each page_data.config}}
+                {{#if groupdoc}}
+                <div class="card mb-3">
+                    <button id="b_{{group}}" type="button" class="card-header text-start btn btn-link text-decoration-none" aria-expanded="false" aria-controls="g_{{group}}" data-bs-toggle="collapse" data-bs-target="#g_{{group}}">{{groupdoc}}</button>
+                    <div id="g_{{group}}" class="card-body collapse">
+                        {{#each elements}}
+                        {{#if editable}}
+                        <div class="row my-2 align-items-center is-overridden-{{overridden}} alert-row" title="[{{name}}] {{doc.description}}">
+                            {{#case type "text" "number" "password"}}
+                            <label for="input_{{name}}" class="col-sm-3 col-form-label">{{doc.name}}</label>
+                            <div class="col-sm-8">
+                                <div class="input-group">
+                                <input class="form-control conf-{{type}}" id="input_{{name}}" type="{{type}}"
+                                    name="{{name}}" value="{{value}}" {{#if default}} placeholder="預設值：{{default}}"{{/if}}>
+                                {{#case type "password"}}
+                                    <button class="btn btn-outline-secondary input-group-text" type="button" data-vw-pw-toggle="input_{{name}}">顯示/隱藏</button>
+                                {{/case}}
+                                </div>
+                            </div>
+                            {{/case}}
+                            {{#case type "checkbox"}}
+                            <div class="col-sm-3 col-form-label">{{doc.name}}</div>
+                            <div class="col-sm-8">
+                                <div class="form-check">
+                                    <input class="form-check-input conf-{{type}}" type="checkbox" id="input_{{name}}"
+                                        name="{{name}}" {{#if value}} checked {{/if}}>
+
+                                    <label class="form-check-label" for="input_{{name}}"> 預設值：{{default}} </label>
+                                </div>
+                            </div>
+                            {{/case}}
+                        </div>
+                        {{/if}}
+                        {{/each}}
+                        {{#case group "smtp"}}
+                            <div class="row my-2 align-items-center pt-3 border-top" title="發送測試郵件至指定電子郵件地址">
+                                <label for="smtp-test-email" class="col-sm-3 col-form-label">測試 SMTP</label>
+                                <div class="col-sm-8 input-group">
+                                    <input class="form-control" id="smtp-test-email" type="email" placeholder="輸入測試郵件" required spellcheck="false">
+                                    <button type="button" class="btn btn-outline-primary input-group-text" id="smtpTest">發送測試郵件</button>
+                                    <div class="invalid-tooltip">請提供有效的電子郵件地址</div>
+                                </div>
+                            </div>
+                        {{/case}}
+                    </div>
+                </div>
+                {{/if}}
+                {{/each}}
+
+                <div class="card mb-3">
+                    <button id="b_readonly" type="button" class="card-header text-start btn btn-link text-decoration-none" aria-expanded="false" aria-controls="g_readonly"
+                            data-bs-toggle="collapse" data-bs-target="#g_readonly">唯讀設定</button>
+                    <div id="g_readonly" class="card-body collapse">
+                        <div class="small mb-3">
+                            注意：這些選項無法在編輯器中修改，因為它們需要重新啟動伺服器。
+                            要修改它們，您需要在啟動伺服器時設定正確的環境變數。
+                            您可以在每個選項的工具提示中檢查變數名稱。
+                        </div>
+
+                        {{#each page_data.config}}
+                        {{#each elements}}
+                        {{#unless editable}}
+                        <div class="row my-2 align-items-center alert-row" title="[{{name}}] {{doc.description}}">
+                            {{#case type "text" "number" "password"}}
+                            <label for="input_{{name}}" class="col-sm-3 col-form-label">{{doc.name}}</label>
+                            <div class="col-sm-8">
+                                <div class="input-group">
+                                {{!--
+                                      同時將 database_url 輸入設為密碼。
+                                      如果我們在 config.rs 中將其設為密碼，則支援字串不會進行字元遮罩。
+                                      有時這對於提供支援比僅顯示 3 個星號更有用。
+                                --}}
+                                {{#if (eq name "database_url")}}
+                                    <input readonly class="form-control" id="input_{{name}}" type="password" value="{{value}}" {{#if default}} placeholder="預設值：{{default}}" {{/if}}>
+                                    <button class="btn btn-outline-secondary" type="button" data-vw-pw-toggle="input_{{name}}">顯示/隱藏</button>
+                                {{else}}
+                                    <input readonly class="form-control" id="input_{{name}}" type="{{type}}" value="{{value}}" {{#if default}} placeholder="預設值：{{default}}" {{/if}} spellcheck="false">
+                                    {{#case type "password"}}
+                                    <button class="btn btn-outline-secondary" type="button" data-vw-pw-toggle="input_{{name}}">顯示/隱藏</button>
+                                    {{/case}}
+                                {{/if}}
+                                </div>
+                            </div>
+                            {{/case}}
+                            {{#case type "checkbox"}}
+                            <div class="col-sm-3 col-form-label">{{doc.name}}</div>
+                            <div class="col-sm-8">
+                                <div class="form-check align-middle">
+                                    <input disabled class="form-check-input" type="checkbox" id="input_{{name}}"
+                                        {{#if value}} checked {{/if}}>
+
+                                    <label class="form-check-label" for="input_{{name}}"> 預設值：{{default}} </label>
+                                </div>
+                            </div>
+                            {{/case}}
+                        </div>
+                        {{/unless}}
+                        {{/each}}
+                        {{/each}}
+
+                    </div>
+                </div>
+
+                {{#if page_data.can_backup}}
+                <div class="card mb-3">
+                    <button id="b_database" type="button" class="card-header text-start btn btn-link text-decoration-none" aria-expanded="false" aria-controls="g_database"
+                            data-bs-toggle="collapse" data-bs-target="#g_database">備份資料庫</button>
+                    <div id="g_database" class="card-body collapse">
+                        <div class="small mb-3">
+                            警告：此功能僅建立 SQLite 資料庫的備份副本。
+                            這不包括任何可能需要完整還原 vaultwarden 實例的設定或檔案附件資料。
+                            有關如何執行完整備份的詳細資訊，請參閱
+                            <a href="https://github.com/dani-garcia/vaultwarden/wiki/Backing-up-your-vault" target="_blank" rel="noopener noreferrer">備份</a> wiki 頁面。
+                        </div>
+                        <button type="button" class="btn btn-primary" id="backupDatabase">備份資料庫</button>
+                    </div>
+                </div>
+                {{/if}}
+
+                <button type="submit" class="btn btn-primary">儲存</button>
+                <button type="button" class="btn btn-danger float-end" id="deleteConf">重設為預設值</button>
+            </form>
+        </div>
+    </div>
+</main>
+<style>
+    #config-block ::placeholder {
+        /* 大多數現代瀏覽器現在都支援此功能。 */
+        color: orangered;
+    }
+
+    .is-overridden-true {
+        --bs-alert-color: #664d03;
+        --bs-alert-bg: #fff3cd;
+        --bs-alert-border-color: #ffecb5;
+    }
+</style>
+<script src="{{urlpath}}/vw_static/admin_settings.js"></script>

@@ -1,0 +1,148 @@
+<main class="container-xl">
+    <div id="users-block" class="my-3 p-3 rounded shadow">
+        <h6 class="border-bottom pb-2 mb-3">登録ユーザー</h6>
+        <div class="table-responsive-xl small">
+            <table id="users-table" class="table table-sm table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th class="vw-account-details">ユーザー</th>
+                        <th class="vw-created-at">作成日時</th>
+                        <th class="vw-last-active">最終アクセス</th>
+                        <th class="vw-entries">エントリ数</th>
+                        <th class="vw-attachments">添付ファイル</th>
+                        <th class="vw-organizations">組織</th>
+                        <th class="vw-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each page_data}}
+                    <tr>
+                        <td>
+                            <svg width="48" height="48" class="float-start me-2 rounded" data-jdenticon-value="{{email}}">
+                            <div>
+                                <strong>{{name}}</strong>
+                                <span class="d-block">{{email}}</span>
+                                <span class="d-block">
+                                    {{#unless user_enabled}}
+                                        <span class="badge bg-danger me-2" title="ユーザーは無効です">無効</span>
+                                    {{/unless}}
+                                    {{#if twoFactorEnabled}}
+                                        <span class="badge bg-success me-2" title="2FAが有効です">2FA</span>
+                                    {{/if}}
+                                    {{#case _status 1}}
+                                        <span class="badge bg-warning text-dark me-2" title="ユーザーは招待中です">招待中</span>
+                                    {{/case}}
+                                    {{#if emailVerified}}
+                                        <span class="badge bg-success me-2" title="メールは確認済みです">確認済み</span>
+                                    {{/if}}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="d-block">{{created_at}}</span>
+                        </td>
+                        <td>
+                            <span class="d-block">{{last_active}}</span>
+                        </td>
+                        <td>
+                            <span class="d-block">{{cipher_count}}</span>
+                        </td>
+                        <td>
+                            <span class="d-block"><strong>数量:</strong> {{attachment_count}}</span>
+                            {{#if attachment_count}}
+                            <span class="d-block"><strong>サイズ:</strong> {{attachment_size}}</span>
+                            {{/if}}
+                        </td>
+                        <td>
+                            <div class="overflow-auto vw-org-cell" data-vw-user-email="{{email}}" data-vw-user-uuid="{{id}}">
+                            {{#each organizations}}
+                            <button class="badge" data-bs-toggle="modal" data-bs-target="#userOrgTypeDialog" data-vw-org-type="{{type}}" data-vw-org-uuid="{{id}}" data-vw-org-name="{{name}}">{{name}}</button>
+                            {{/each}}
+                            </div>
+                        </td>
+                        <td class="text-end px-0 small">
+                            <span data-vw-user-uuid="{{id}}" data-vw-user-email="{{email}}">
+                                {{#if twoFactorEnabled}}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0 float-right" vw-remove2fa>2FAを削除</button><br>
+                                {{/if}}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0 float-right" vw-deauth-user>セッションを無効化</button><br>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0 float-right" vw-delete-user>ユーザー削除</button><br>
+                                {{#if user_enabled}}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0 float-right" vw-disable-user>ユーザー無効化</button><br>
+                                {{else}}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0 float-right" vw-enable-user>ユーザー有効化</button><br>
+                                {{/if}}
+                                {{#case _status 1}}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0 float-right" vw-resend-user-invite>招待を再送</button><br>
+                                {{/case}}
+                            </span>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3 clearfix">
+            <button type="button" class="btn btn-sm btn-danger" id="updateRevisions"
+                title="次回接続時にすべてのクライアントに新しいデータを強制的に取得させます。バックアップ復元後に古いデータを削除する場合に便利です。">
+                クライアントに再同期を強制
+            </button>
+
+            <button type="button" class="btn btn-sm btn-primary float-end" id="reload">ユーザーを再読み込み</button>
+        </div>
+    </div>
+
+    <div id="inviteUserFormBlock" class="align-items-center p-3 mb-3 text-white-50 bg-secondary rounded shadow">
+        <div>
+            <h6 class="mb-0 text-white">ユーザーを招待</h6>
+            <small>メールアドレス:</small>
+
+            <form class="form-inline input-group w-50" id="inviteUserForm">
+                <input type="email" class="form-control me-2" id="inviteEmail" placeholder="メールアドレスを入力" required spellcheck="false">
+                <button type="submit" class="btn btn-primary">招待</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="userOrgTypeDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        <b>ユーザータイプを更新:</b><br><b>組織:</b> <span id="userOrgTypeDialogOrgName"></span><br><b>ユーザー:</b> <span id="userOrgTypeDialogUserEmail"></span>
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                </div>
+                <form class="form" id="userOrgTypeForm">
+                    <input type="hidden" name="user_uuid" id="userOrgTypeUserUuid" value="">
+                    <input type="hidden" name="org_uuid" id="userOrgTypeOrgUuid" value="">
+                    <div class="modal-body">
+                        <div class="radio">
+                            <label><input type="radio" value="2" class="form-radio-input" name="user_type" id="userOrgTypeUser">&nbsp;ユーザー</label>
+                        </div>
+                        <div class="radio">
+                            <label><input type="radio" value="3" class="form-radio-input" name="user_type" id="userOrgTypeManager">&nbsp;マネージャー</label>
+                        </div>
+                        <div class="radio">
+                            <label><input type="radio" value="1" class="form-radio-input" name="user_type" id="userOrgTypeAdmin">&nbsp;管理者</label>
+                        </div>
+                        <div class="radio">
+                            <label><input type="radio" value="0" class="form-radio-input" name="user_type" id="userOrgTypeOwner">&nbsp;オーナー</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="submit" class="btn btn-sm btn-primary">役割を変更</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<link rel="stylesheet" href="{{urlpath}}/vw_static/datatables.css" />
+<script src="{{urlpath}}/vw_static/jquery-3.7.1.slim.js"></script>
+<script src="{{urlpath}}/vw_static/datatables.js"></script>
+<script src="{{urlpath}}/vw_static/admin_users.js"></script>
+<script src="{{urlpath}}/vw_static/jdenticon-3.3.0.js"></script>

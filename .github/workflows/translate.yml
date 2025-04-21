@@ -1,0 +1,29 @@
+name: Auto Translate Script
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 1 * *"
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name:  Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run translate script
+        run: bash ./translate.sh
+        env:
+         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+
